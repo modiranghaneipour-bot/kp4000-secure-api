@@ -23,12 +23,13 @@ try {
     $expiresAt = time() + KP4000_CHALLENGE_TTL_SECONDS;
 
     $insert = $db->prepare(
-        'INSERT INTO api_challenges (challenge_id, device_id, challenge_hash, expires_at, used_at, created_at)
-         VALUES (:id, :device_id, :challenge_hash, :expires_at, NULL, :created_at)'
+        'INSERT INTO api_challenges (challenge_id, device_id, challenge_value, challenge_hash, expires_at, used_at, created_at)
+         VALUES (:id, :device_id, :challenge_value, :challenge_hash, :expires_at, NULL, :created_at)'
     );
     $insert->execute([
         ':id' => $challengeId,
         ':device_id' => $deviceId,
+        ':challenge_value' => $challenge,
         ':challenge_hash' => hash('sha256', $challenge),
         ':expires_at' => $expiresAt,
         ':created_at' => time(),
