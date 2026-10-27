@@ -1,0 +1,10 @@
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+config.local.php
+*.sqlite
+*.sqlite3
+*.db
+*.log
+.DS_Store
