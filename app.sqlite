@@ -1,0 +1,90 @@
+
+<?php
+declare(strict_types=1);
+
+// اجرای اولیه از مرورگر، فقط با کلید تصادفی موقت.
+// پس از موفقیت، این فایل را فوراً حذف کنید.
+
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
+
+$setupKey = 'REPLACE_WITH_A_LONG_RANDOM_SECRET_KEY';
+
+if (
+    !isset($_GET['key']) ||
+    !is_string($_GET['key']) ||
+    !hash_equals($setupKey, $_GET['key'])
+) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'forbidden']);
+    exit;
+}
+
+$dbDir = '/home/helpscho/mydatabase';
+$dbPath = $dbDir . '/app.sqlite';
+$schemaPath = __DIR__ . '/api/schema.sql';
+
+if (!is_dir($dbDir) || !is_writable($dbDir)) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'database_directory_missing_or_not_writable'
+    ]);
+    exit;
+}
+
+if (!is_file($schemaPath)) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'schema_sql_not_found'
+    ]);
+    exit;
+}
+
+if (is_file($dbPath)) {
+    http_response_code(409);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'database_already_exists'
+    ]);
+    exit;
+}
+
+try {
+    if (!extension_loaded('pdo_sqlite')) {
+        throw new RuntimeException('PDO_SQLite is unavailable');
+    }
+
+    $pdo = new PDO('sqlite:' . $dbPath);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec('PRAGMA foreign_keys = ON');
+
+    $schema = file_get_contents($schemaPath);
+    if ($schema === false) {
+        throw new RuntimeException('Cannot read schema');
+    }
+
+    $pdo->exec($schema);
+    $pdo = null;
+
+    chmod($dbPath, 0600);
+
+    echo json_encode([
+        'ok' => true,
+        'message' => 'SQLite database created'
+    ], JSON_UNESCAPED_UNICODE);
+
+} catch (Throwable $e) {
+    if (is_file($dbPath)) {
+        @unlink($dbPath);
+    }
+
+    error_log('Database setup failed: ' . $e->getMessage());
+
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'database_setup_failed'
+    ]);
+}
