@@ -1,0 +1,11 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Cache-Control "no-store"
+</IfModule>
+
+# Do not expose local configuration files if this directory is deployed as-is.
+<FilesMatch "^(config\.local\.php|\.env.*)$">
+    Require all denied
+</FilesMatch>
