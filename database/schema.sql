@@ -11,6 +11,17 @@ CREATE TABLE IF NOT EXISTS devices (
     updated_at INTEGER NOT NULL
 );
 
+-- Store only SHA-256 hashes of one-time activation codes.
+-- Provision activation_code_hash = SHA-256(uppercase 32-character hex code).
+CREATE TABLE IF NOT EXISTS device_activation_codes (
+    activation_code_hash TEXT PRIMARY KEY,
+    expires_at INTEGER NULL,
+    used_at INTEGER NULL,
+    bound_device_id TEXT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (bound_device_id) REFERENCES devices(device_id) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS api_challenges (
     challenge_id TEXT PRIMARY KEY,
     device_id TEXT NOT NULL,
